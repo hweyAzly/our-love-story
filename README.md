@@ -1,44 +1,65 @@
 # 我们的时光 · 情侣生活展示网页
 
-一个纯静态的多页面情侣网站，无需任何构建工具，直接托管到 GitHub Pages 即可上线。
+静态多页面站点，托管于 GitHub Pages；内容由 `data/site.json` 驱动，通过 Cloudflare Worker 后台在线编辑（服务端校验密码，GitHub Token 不暴露给浏览器）。
 
-## 页面结构
+线上地址：**https://hwey.qd.je/**
 
-| 文件 | 页面 | 说明 |
-|------|------|------|
-| `index.html` | 首页 | 在一起天数计时 + 各页面快捷入口 |
-| `gallery.html` | 相册 | 照片墙，点击可放大 |
-| `timeline.html` | 时间线 | 恋爱大事记 |
-| `messages.html` | 留言板 | 写留言（保存在浏览器 localStorage） |
-| `about.html` | 关于我们 | 两个人的小档案 |
+## 目录结构
 
-## 如何修改成你们自己的内容
+```
+index.html / gallery.html / timeline.html / messages.html / about.html   页面
+css/style.css          全站样式
+js/main.js             读取 data/site.json 并渲染 + 灯箱 + 留言提交
+js/config.js           后台 Worker 地址配置（部署 Worker 后填写）
+data/site.json         全部内容：纪念日、时间线、照片列表、留言
+images/                上传的照片（由后台自动写入）
+worker/worker.js       后台：登录、保存、上传图片、提交留言
+worker/wrangler.toml   Worker 配置
+worker/README.md       Worker 部署步骤
+```
 
-1. **纪念日**：打开 `js/main.js`，修改第一行的 `LOVE_START = "2024-02-14"`。
-2. **照片**：把照片放进 `images/` 文件夹，然后打开 `gallery.html`，把每个
-   `<figure>` 里的 `.photo-placeholder` 占位块换成：
-   ```html
-   <img src="images/xxx.jpg" alt="说明">
-   ```
-3. **时间线事件**：打开 `timeline.html`，复制一个 `.tl-item` 块修改日期和文字。
-4. **个人资料**：打开 `about.html` 直接改文字。
+## 内容如何更新
+
+**方式一：后台（推荐）**
+部署 `worker/` 后，打开 Worker 地址 → 输入密码 → 改内容/传图 → 「保存并发布」，
+提交到 GitHub 后 30–60 秒自动上线。
+
+**方式二：直接改 `data/site.json`**
+用 GitHub 网页编辑该文件并提交，同样会自动上线。
 
 ## 本地预览
 
-直接双击 `index.html` 即可；或在本目录运行：
-
 ```bash
 python -m http.server 8000
-# 然后浏览器访问 http://localhost:8000
+# 浏览器打开 http://localhost:8000
 ```
 
-## 部署到 GitHub Pages（自定义域名）
+注意：必须用本地服务器打开，直接双击 `index.html` 时浏览器会以 `file://` 协议
+拦截 `fetch("data/site.json")`，页面会退回到 HTML 内嵌的静态示例内容。
 
-1. 在 `CNAME` 文件里填入你的域名（不带 `http://`）。
-2. 推送到 GitHub 后，进入仓库 **Settings → Pages**，
-   Source 选择 `main` 分支 / `(root)` 目录，保存。
-3. 到域名服务商的 DNS 管理里，添加两条记录：
-   - **A 记录**（根域名 `@`）→ `185.199.108.153`、`185.199.109.153`、
-     `185.199.110.153`、`185.199.111.153`（四条都要加）
-   - **CNAME 记录**（子域名如 `love`）→ `你的GitHub用户名.github.io`
-4. 等待 DNS 生效（几分钟到几小时），GitHub 会自动签发 HTTPS 证书。
+## 数据结构（data/site.json）
+
+```json
+{
+  "love_start": "2024-02-14",
+  "timeline": [{ "date": "2024-02-14", "title": "在一起啦", "text": "……" }],
+  "photos":   [{ "src": "images/xxx.jpg", "caption": "说明", "emoji": "🌊", "tone": "ph-1" }],
+  "messages": [{ "name": "hwey", "text": "……", "time": "2026-11-10 17:30:00" }]
+}
+```
+
+- `photos[].src` 留空则显示彩色占位块（emoji + tone 控制外观）。
+- `messages` 由留言板或后台写入，最新的在最前。
+
+## 部署与域名
+
+- GitHub Pages：仓库 Settings → Pages → Source 选 `main` / `(root)`
+- 自定义域名：`CNAME` 文件内容为 `hwey.qd.je`；DNS 用 4 条 A + 4 条 AAAA
+  指向 GitHub Pages（DigitalPlat 面板不允许根节点 CNAME）
+- 后台部署：见 `worker/README.md`
+
+## 已知限制
+
+- GitHub Pages 不执行服务端代码，因此登录校验必须由 Worker 完成；**不要把密码写进前端 JS**。
+- GitHub Contents API 单文件可靠读写上限约 1MB，照片由浏览器压缩后再上传。
+- Pages 站点总量 1GB、构建软限 10 次/小时。

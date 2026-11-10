@@ -1,0 +1,9 @@
+name = "love-admin"
+main = "worker.js"
+compatibility_date = "2025-01-01"
+
+# 环境变量（非敏感的直接写这里；敏感项用 wrangler secret put 写入）
+[vars]
+REPO = "hweyAzly/our-love-story"
+BRANCH = "main"
+ALLOWED_ORIGINS = "https://hwey.qd.je,https://hweyazly.github.io"
