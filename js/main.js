@@ -204,6 +204,20 @@ function initMessageForm() {
   });
 }
 
+/* ---------------- 页脚管理入口（低调，仅在配置了后台时出现） ---------------- */
+function injectAdminLink() {
+  if (!ADMIN_API) return;
+  const p = document.querySelector(".footer p");
+  if (!p || p.querySelector(".footer-admin")) return;
+  p.appendChild(document.createTextNode(" · "));
+  const a = document.createElement("a");
+  a.className = "footer-admin";
+  a.href = ADMIN_API;
+  a.textContent = "管理";
+  a.rel = "noopener";
+  p.appendChild(a);
+}
+
 /* ---------------- 启动 ---------------- */
 (async function boot() {
   const data = await loadSiteData();
@@ -222,4 +236,5 @@ function initMessageForm() {
   }
   initLightbox();
   initMessageForm();
+  injectAdminLink();
 })();
