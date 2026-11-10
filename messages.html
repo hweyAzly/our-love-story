@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我们的时光 · 留言板</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">❤ 我们</a>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="gallery.html">相册</a></li>
+      <li><a href="timeline.html">时间线</a></li>
+      <li><a href="messages.html" class="active">留言板</a></li>
+      <li><a href="about.html">关于我们</a></li>
+    </ul>
+  </nav>
+
+  <main class="page">
+    <h1 class="page-title">💌 留言板</h1>
+    <p class="page-desc">写点想对 TA 说的话吧（留言保存在浏览器本地，只有这台电脑能看到）。</p>
+
+    <form class="msg-form" id="msg-form">
+      <input type="text" id="msg-name" placeholder="你的名字" maxlength="20" required>
+      <textarea id="msg-text" placeholder="想说的话…" maxlength="200" rows="4" required></textarea>
+      <button type="submit" class="btn btn-primary">留下这句话</button>
+    </form>
+
+    <div class="msg-list" id="msg-list"></div>
+  </main>
+
+  <footer class="footer">
+    <p>Made with ❤ by us · 我们的时光</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

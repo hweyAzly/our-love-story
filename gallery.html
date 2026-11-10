@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>我们的时光 · 相册</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="logo">❤ 我们</a>
+    <ul class="nav-links">
+      <li><a href="index.html">首页</a></li>
+      <li><a href="gallery.html" class="active">相册</a></li>
+      <li><a href="timeline.html">时间线</a></li>
+      <li><a href="messages.html">留言板</a></li>
+      <li><a href="about.html">关于我们</a></li>
+    </ul>
+  </nav>
+
+  <main class="page">
+    <h1 class="page-title">📷 照片墙</h1>
+    <p class="page-desc">把你们的照片放进 <code>images/</code> 文件夹，然后在下面修改文件名即可。点击图片可以放大查看。</p>
+
+    <!--
+      添加照片方法：
+      1. 把照片放到 images/ 文件夹
+      2. 复制一份下面的 <figure> 块，把 src 改成你的图片文件名，caption 改成说明文字
+    -->
+    <div class="gallery-grid" id="gallery-grid">
+      <figure class="photo" data-caption="第一次一起看海 🌊">
+        <div class="photo-placeholder ph-1">🌊</div>
+        <figcaption>第一次一起看海 🌊</figcaption>
+      </figure>
+      <figure class="photo" data-caption="周末的咖啡时光 ☕">
+        <div class="photo-placeholder ph-2">☕</div>
+        <figcaption>周末的咖啡时光 ☕</figcaption>
+      </figure>
+      <figure class="photo" data-caption="夜市逛吃逛吃 🍡">
+        <div class="photo-placeholder ph-3">🍡</div>
+        <figcaption>夜市逛吃逛吃 🍡</figcaption>
+      </figure>
+      <figure class="photo" data-caption="一起爬山，山顶风好大 ⛰️">
+        <div class="photo-placeholder ph-4">⛰️</div>
+        <figcaption>一起爬山，山顶风好大 ⛰️</figcaption>
+      </figure>
+      <figure class="photo" data-caption="在家做了一顿饭 🍳">
+        <div class="photo-placeholder ph-5">🍳</div>
+        <figcaption>在家做的一顿晚饭 🍳</figcaption>
+      </figure>
+      <figure class="photo" data-caption="公园里的秋天 🍂">
+        <div class="photo-placeholder ph-6">🍂</div>
+        <figcaption>公园里的秋天 🍂</figcaption>
+      </figure>
+    </div>
+  </main>
+
+  <!-- 点击放大 -->
+  <div class="lightbox" id="lightbox">
+    <div class="lightbox-content">
+      <div class="lightbox-img" id="lightbox-img"></div>
+      <p id="lightbox-caption"></p>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>Made with ❤ by us · 我们的时光</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
