@@ -17,6 +17,47 @@ const API = "https://api.github.com";
 const TOKEN_TTL_MS = 12 * 60 * 60 * 1000; // 登录有效期 12 小时
 const MAX_IMAGE_BYTES = 1_200_000;
 
+/* ---------------- 登录限流（基于 IP，内存实现） ----------------
+ * 规则：同一 IP 密码错误 5 次后，从最后一次失败起 10 分钟内禁止再试。
+ * 注意：这是每个 PoP（数据中心）内每个 Worker 实例的内存计数，属"尽力而为"——
+ * 实例重启或请求落到不同 PoP 时计数会重新开始。对个人站足够；
+ * 若要全局强一致，需改用 Durable Objects 或 Cloudflare WAF 规则。
+ */
+const RL_MAX_FAILURES = 5;
+const RL_WINDOW_MS = 10 * 60 * 1000;
+const loginAttempts = new Map(); // ip -> { count, resetAt }
+
+function clientIp(request) {
+  return request.headers.get("CF-Connecting-IP") || request.headers.get("X-Forwarded-For") || "unknown";
+}
+
+function pruneRateMap() {
+  const now = Date.now();
+  for (const [k, v] of loginAttempts) {
+    if (v.resetAt <= now) loginAttempts.delete(k);
+  }
+}
+
+function rateBlocked(ip) {
+  pruneRateMap();
+  const s = loginAttempts.get(ip);
+  if (s && s.resetAt > Date.now() && s.count >= RL_MAX_FAILURES) {
+    return Math.ceil((s.resetAt - Date.now()) / 1000); // 剩余秒数
+  }
+  return 0;
+}
+
+function rateFail(ip) {
+  const s = loginAttempts.get(ip);
+  const now = Date.now();
+  if (s && s.resetAt > now) s.count += 1;
+  else loginAttempts.set(ip, { count: 1, resetAt: now + RL_WINDOW_MS });
+}
+
+function rateClear(ip) {
+  loginAttempts.delete(ip);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -34,10 +75,22 @@ export default {
       }
 
       if (url.pathname === "/api/login" && request.method === "POST") {
+        const ip = clientIp(request);
+        const waitSec = rateBlocked(ip);
+        if (waitSec > 0) {
+          return json(
+            { ok: false, error: "失败次数过多，请 " + Math.ceil(waitSec / 60) + " 分钟后再试" },
+            429,
+            Object.assign({ "Retry-After": String(waitSec) }, cors)
+          );
+        }
         const body = await request.json();
         if (!body.password || !(await sameSecret(body.password, env.PASSWORD, env.SECRET))) {
-          return json({ ok: false, error: "密码错误" }, 401, cors);
+          rateFail(ip);
+          const left = Math.max(0, RL_MAX_FAILURES - (loginAttempts.get(ip) || { count: 0 }).count);
+          return json({ ok: false, error: "密码错误（还可尝试 " + left + " 次）" }, 401, cors);
         }
+        rateClear(ip);
         const exp = Date.now() + TOKEN_TTL_MS;
         return json({ ok: true, token: exp + "." + (await sign(String(exp), env.SECRET)) }, 200, cors);
       }
@@ -77,10 +130,21 @@ export default {
       }
 
       if (url.pathname === "/api/message" && request.method === "POST") {
+        const ip = clientIp(request);
+        const waitSec = rateBlocked(ip);
+        if (waitSec > 0) {
+          return json(
+            { ok: false, error: "失败次数过多，请 " + Math.ceil(waitSec / 60) + " 分钟后再试" },
+            429,
+            Object.assign({ "Retry-After": String(waitSec) }, cors)
+          );
+        }
         const body = await request.json();
         if (!body.password || !(await sameSecret(body.password, env.PASSWORD, env.SECRET))) {
+          rateFail(ip);
           return json({ ok: false, error: "密码错误" }, 401, cors);
         }
+        rateClear(ip);
         const name = String(body.name || "").trim().slice(0, 20);
         const text = String(body.text || "").trim().slice(0, 300);
         if (!name || !text) return json({ ok: false, error: "名字和内容都不能为空" }, 400, cors);
